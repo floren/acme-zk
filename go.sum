@@ -1,0 +1,4 @@
+9fans.net/go v0.0.4 h1:g7K+b5I1PlSBFLnjuco3LAx5boK39UUl0Gsrmw6Gl2U=
+9fans.net/go v0.0.4/go.mod h1:lfPdxjq9v8pVQXUMBCx5EO5oLXWQFlKRQgs1kEkjoIM=
+github.com/floren/zk v0.0.0-20210616001940-6cd17b234e9c h1:VK2WHcMOaPLV173yJzFd0eJx497s3lHxNAMO1y/gBgQ=
+github.com/floren/zk v0.0.0-20210616001940-6cd17b234e9c/go.mod h1:EXVHaRbw/mgQ+uRtBTpIuEFQ3W26ggNmM0hfDMu00sg=
