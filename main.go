@@ -172,12 +172,18 @@ func updateDisplay(w *acme.Win) {
 }
 
 func openNote(id int) {
+	// dirty is true if the buffer has been changed
+	// dirtyWarned is true if the user executed "Get" and has been warned that the buffer is dirty
+	var dirty, dirtyWarned bool
+
 	w, err := acme.New()
 	if err != nil {
 		fmt.Printf("couldn't create new acme window: %v\n", err)
 		return
 	}
 	w.Name("zk/%d", id)
+	// Tag
+	w.Fprintf("tag", "Undo Redo Put")
 
 	// Populate the body
 	getBody := func() {
@@ -186,9 +192,12 @@ func openNote(id int) {
 			w.Errf("Can't open note %d: %v", id, err)
 			return
 		}
+		dirty = false
+		w.Clear()
+		w.Fprintf("body", "%s", note.Body)
 
-		w.Fprintf("body", note.Body)
-
+		w.Addr("0")
+		w.Ctl("dot=addr")
 		w.Ctl("show")
 		w.Ctl("clean")
 	}
@@ -200,15 +209,40 @@ func openNote(id int) {
 		case 'x':
 			// execute in the tag
 			switch string(e.Text) {
-			case "Del":
-				w.Ctl("delete")
-				return
-			case "Update":
-				// Check the ZK state and refresh
-				updateDisplay(w)
+			case "Put":
+				// First read what's in the window
+				body, err := w.ReadAll("body")
+				if err != nil {
+					w.Errf("Can't read body: %v", err)
+					continue
+				}
+				// TODO: implement change detection so we can warn
+				// before we overwrite if it's been changed elsewhere
+				zk.UpdateNote(id, string(body))
+				dirty = false
+				w.Ctl("clean")
+			case "Get":
+				// Re-read the note
+				// throw a warning if body is dirty
+				if dirty && !dirtyWarned {
+					w.Err(fmt.Sprintf("Note %d has been changed, Get again to discard changes", id))
+					dirtyWarned = true
+					continue
+				}
+				dirtyWarned = false
+				getBody()
 			default:
 				// just run the command
 				w.WriteEvent(e)
+			}
+		case 'D':
+			// text deleted from body
+			fallthrough
+		case 'I':
+			// text inserted to the body
+			if !dirty {
+				w.Ctl("dirty")
+				dirty = true
 			}
 		}
 		if err != nil {
